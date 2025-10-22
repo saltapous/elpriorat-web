@@ -1,0 +1,14 @@
+{
+  "extends": ["next/core-web-vitals", "prettier"],
+  "plugins": ["unused-imports", "tailwindcss"],
+  "rules": {
+    "unused-imports/no-unused-imports": "warn",
+    "unused-imports/no-unused-vars": [
+      "warn",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "tailwindcss/classnames-order": "warn",
+    "tailwindcss/no-custom-classname": "off",
+    "react/jsx-key": "off"
+  }
+}

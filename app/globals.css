@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* tot el que sigui @apply posa-ho dins d'un layer */
+@layer base {
+  html, body { @apply min-h-dvh bg-neutral-950 text-neutral-100 antialiased; }
+  a { @apply text-sky-400 hover:underline; }
+}
+
+
+
+
+
+
