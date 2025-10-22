@@ -2,7 +2,7 @@ name: Deploy Next.js to GitHub Pages
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -30,8 +30,11 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
+      - run: pnpm run build            # crea ./out perquè tenim output:'export'
       - run: touch out/.nojekyll
+
+      # 👇 Pass recomanat per GitHub Pages
+      - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -46,3 +49,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+
