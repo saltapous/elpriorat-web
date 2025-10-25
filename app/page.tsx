@@ -1,133 +1,112 @@
-function Card(props: { id?: string; title: string; desc: string; href?: string }) {
-  const Wrapper: any = props.href ? "a" : "div";
+export default function HomePage() {
   return (
-    <Wrapper
-      id={props.id}
-      href={props.href}
-      className="group block rounded-2xl border border-white/10 bg-white/5 p-6 transition hover:bg-white/[0.08] hover:shadow-lg"
-    >
-      <h3 className="text-lg font-semibold tracking-tight group-hover:text-sky-400">
-        {props.title}
-      </h3>
-      <p className="mt-2 text-neutral-300">{props.desc}</p>
-      {props.href && (
-        <span className="mt-4 inline-block text-sm text-sky-400 underline-offset-2 group-hover:underline">
-          Explora
-        </span>
-      )}
-    </Wrapper>
-  );
-}
+    <main className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+      {/* HERO amb imatge local */}
+      <section
+        className="relative h-[60vh] bg-cover bg-center flex items-center justify-center"
+        style={{
+          backgroundImage: "url('/hero-priorat.jpg')",
+        }}
+      >
+        {/* capa fosca per llegibilitat */}
+        <div className="absolute inset-0 bg-black/60" />
 
-export default function Page() {
-  return (
-    <>
-      {/* HERO amb imatge i gradient */}
-      <section className="relative isolate">
-        {/* Imatge de fons */}
-        <div className="absolute inset-0 -z-10">
-          <img
-            src="/hero-priorat.jpg"
-            alt="Vinyes del Priorat amb muntanyes de fons"
-            className="h-full w-full object-cover"
-          />
-          {/* Gradient per millorar llegibilitat */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-neutral-950/90" />
-        </div>
-
-        {/* Text principal */}
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl font-semibold mb-4 text-white">
             Benvinguts al Priorat
           </h1>
-          <p className="mt-4 max-w-2xl text-neutral-200">
+
+          <p className="text-lg text-neutral-300 leading-relaxed">
             Guia moderna per descobrir camins, cellers i paisatges.
             Contingut curat, rutes i agenda local.
           </p>
-          <div className="mt-8">
-            <a
-              href="#vins"
-              className="inline-block rounded-xl border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
-            >
-              Explora vins i cellers
-            </a>
-          </div>
-        </div>
-      </section>
 
-      {/* GRID seccions principals */}
-      <section className="mx-auto max-w-6xl px-4 pb-20">
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card
-            id="rutes"
-            title="Rutes a peu"
-            desc="GR, camins històrics i senders entre vinyes."
-            href="#rutes-detall"
-          />
-          <Card
-            id="vins"
-            title="Vins i cellers"
-            desc="DOQ Priorat i DO Montsant: mapes i visites."
-            href="#vins-detall"
-          />
-          <Card
-            id="pobles"
-            title="Pobles"
-            desc="Fitxes breus: història, què veure i on menjar."
-            href="#pobles-detall"
-          />
-        </div>
-      </section>
-
-      {/* BLOCS DE DETALL */}
-      <section
-        id="rutes-detall"
-        className="mx-auto max-w-6xl px-4 py-12 border-t border-white/10"
-      >
-        <h2 className="text-2xl font-semibold">Rutes</h2>
-        <p className="mt-2 text-neutral-300">
-          Pròximament: rutes a peu i en bici amb mapa i GPX.
-        </p>
-      </section>
-
-      <section
-        id="vins-detall"
-        className="mx-auto max-w-6xl px-4 py-12 border-t border-white/10"
-      >
-        <h2 className="text-2xl font-semibold">Vins i cellers</h2>
-        <p className="mt-2 text-neutral-300">
-          Mapa de cellers, visites i tastos organitzats.
-        </p>
-      </section>
-
-      <section
-        id="pobles-detall"
-        className="mx-auto max-w-6xl px-4 py-12 border-t border-white/10"
-      >
-        <h2 className="text-2xl font-semibold">Pobles</h2>
-        <p className="mt-2 text-neutral-300">
-          Fitxes amb història, llocs d’interès i on menjar/dormir.
-        </p>
-      </section>
-
-      {/* CONTACTE */}
-      <section id="contacte" className="mx-auto max-w-6xl px-4 py-16">
-        <h2 className="text-2xl font-semibold">Contacte</h2>
-        <p className="mt-2 text-neutral-300">
-          Tens una ruta o un celler per proposar? Escriu-nos:{" "}
           <a
-            href="mailto:hello@elpriorat.cat"
-            className="text-sky-400 hover:underline"
+            href="/allotjaments"
+            className="inline-block mt-8 rounded-xl bg-emerald-600 px-6 py-3 font-medium text-neutral-950 hover:bg-emerald-500 transition"
           >
-            hello@elpriorat.cat
+            Explora allotjaments
           </a>
-        </p>
+        </div>
       </section>
-    </>
+
+      {/* BLOCS PRINCIPALS */}
+      <section className="py-16 px-6 max-w-6xl mx-auto grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Rutes */}
+        <div className="bg-neutral-900 rounded-2xl p-6 border border-neutral-800 hover:border-emerald-600 transition">
+          <h2 className="text-emerald-400 text-lg font-semibold mb-2">
+            Rutes a peu
+          </h2>
+          <p className="text-neutral-400 text-sm mb-3">
+            GR, camins històrics i senders entre vinyes.
+          </p>
+          <a
+            href="/rutes"
+            className="text-emerald-500 text-sm font-medium hover:underline"
+          >
+            Explora
+          </a>
+        </div>
+
+        {/* Vins i cellers */}
+        <div className="bg-neutral-900 rounded-2xl p-6 border border-neutral-800 hover:border-emerald-600 transition">
+          <h2 className="text-emerald-400 text-lg font-semibold mb-2">
+            Vins i cellers
+          </h2>
+          <p className="text-neutral-400 text-sm mb-3">
+            DOQ Priorat i DO Montsant: mapes i visites.
+          </p>
+          <a
+            href="/cellers"
+            className="text-emerald-500 text-sm font-medium hover:underline"
+          >
+            Explora
+          </a>
+        </div>
+
+        {/* Pobles */}
+        <div className="bg-neutral-900 rounded-2xl p-6 border border-neutral-800 hover:border-emerald-600 transition">
+          <h2 className="text-emerald-400 text-lg font-semibold mb-2">
+            Pobles
+          </h2>
+          <p className="text-neutral-400 text-sm mb-3">
+            Fitxes breus: història, què veure i on menjar.
+          </p>
+          <a
+            href="/pobles"
+            className="text-emerald-500 text-sm font-medium hover:underline"
+          >
+            Explora
+          </a>
+        </div>
+
+        {/* Allotjaments */}
+        <div className="bg-neutral-900 rounded-2xl p-6 border border-neutral-800 hover:border-emerald-600 transition">
+          <h2 className="text-emerald-400 text-lg font-semibold mb-2">
+            Allotjaments
+          </h2>
+          <p className="text-neutral-400 text-sm mb-3">
+            Cases rurals, hotels i càmpings del Priorat.
+          </p>
+          <a
+            href="/allotjaments"
+            className="text-emerald-500 text-sm font-medium hover:underline"
+          >
+            Explora
+          </a>
+        </div>
+      </section>
+
+      {/* PEU DE PÀGINA */}
+      <footer className="py-8 text-center text-sm text-neutral-600 border-t border-neutral-800">
+        <p>
+          © {new Date().getFullYear()} elpriorat.cat — Projecte obert per
+          descobrir, compartir i viure el Priorat 🍷
+        </p>
+      </footer>
+    </main>
   );
 }
-
-
 
 
 
