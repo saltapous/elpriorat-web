@@ -1,88 +1,159 @@
-export default function AllotjamentsPage() {
-  // Això després vindrà de la base de dades.
-  // Ara ho deixem hardcoded com a demo.
-  const allotjaments = [
-    {
-      name: "Casa del Montsant",
-      slug: "casa-del-montsant",
-      tipus: "Casa rural",
-      persones: 4,
-      preu: 140,
-      poble: "La Morera de Montsant",
-    },
-    // Més allotjaments en el futur...
-  ];
+import Image from "next/image";
+import { getSupabaseServerClient } from "@/lib/supabaseClient";
+
+type Allotjament = {
+  id: number;
+  nom: string;
+  slug: string;
+  tipus: string;
+  poble: string;
+  capacitat_persones: number;
+  preu_base_nit: number;
+  foto_portada_url: string | null;
+  descripcio_curta: string | null;
+};
+
+export const revalidate = 0;
+
+export default async function AllotjamentsPage() {
+  const supabase = getSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("allotjaments")
+    .select(
+      [
+        "id",
+        "nom",
+        "slug",
+        "tipus",
+        "poble",
+        "capacitat_persones",
+        "preu_base_nit",
+        "foto_portada_url",
+        "descripcio_curta",
+      ].join(", ")
+    )
+    .order("nom", { ascending: true });
+
+  if (error) {
+    console.error("Error carregant allotjaments:", error);
+    return (
+      <main className="max-w-5xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-semibold text-white mb-4">
+          Allotjaments
+        </h1>
+        <p className="text-red-400">
+          No s'han pogut carregar els allotjaments ara mateix.
+        </p>
+      </main>
+    );
+  }
+
+  const allotjaments = (data || []) as Allotjament[];
 
   return (
-    <main
-      className="
-        relative
-        min-h-screen
-        text-neutral-100
-        bg-neutral-950
-        bg-[url('/hero-priorat.jpg')]
-        bg-cover
-        bg-center
-      "
-    >
-      {/* capa fosca al damunt de la foto per fer contrast */}
-      <div className="absolute inset-0 bg-black/70" />
-
-      {/* contingut */}
-      <section className="relative px-6 py-12 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-semibold mb-2">
+    <main className="max-w-5xl mx-auto px-4 py-12">
+      {/* Hero */}
+      <header className="mb-10">
+        <h1 className="text-3xl font-semibold text-white">
           Allotjaments al Priorat
         </h1>
-
-        <p className="text-neutral-300 mb-8 max-w-xl">
+        <p className="text-neutral-300 mt-2 text-sm max-w-2xl">
           Cases rurals legals, hotels tranquils i càmpings petits. Reserva
           directament amb la gent del territori, sense intermediaris grans.
         </p>
+      </header>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {allotjaments.map((item) => (
-            <a
-              key={item.slug}
-              href={`/allotjaments/${item.slug}`}
-              className="
-                block rounded-2xl border border-neutral-800/60
-                bg-neutral-900/70 backdrop-blur-sm
-                p-5
-                hover:border-emerald-600 hover:shadow-lg hover:shadow-emerald-600/10
-                transition
-              "
+      {/* Cards */}
+      <section className="grid gap-6">
+        {allotjaments.length === 0 ? (
+          <p className="text-neutral-400">
+            Encara no hi ha allotjaments disponibles.
+          </p>
+        ) : (
+          allotjaments.map((item) => (
+            <article
+              key={item.id}
+              className="bg-neutral-900/70 border border-neutral-800 rounded-xl p-4 md:flex md:gap-4 md:items-start shadow-[0_30px_120px_rgba(0,0,0,0.8)]"
             >
-              {/* FOTO PLACEHOLDER */}
-              <div className="aspect-[4/3] w-full rounded-xl bg-neutral-800/60 mb-4 flex items-center justify-center text-neutral-400 text-sm">
-                FOTO
+              {/* FOTO */}
+              <div className="w-full md:w-64 flex-shrink-0">
+                <div className="relative w-full h-48 rounded-lg border border-neutral-800 bg-neutral-900/60 overflow-hidden flex items-center justify-center text-neutral-400 text-sm">
+                  {item.foto_portada_url ? (
+  item.foto_portada_url.includes("via.placeholder.com") ? (
+    // Per URLs que no volem passar per <Image />
+    <img
+      src={item.foto_portada_url}
+      alt={item.nom}
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+  ) : (
+    // Per URLs que sí tenim configurades (Supabase)
+    <Image
+      src={item.foto_portada_url}
+      alt={item.nom}
+      fill
+      className="object-cover"
+    />
+  )
+) : (
+  <span className="text-neutral-500">FOTO</span>
+)}
+
+                </div>
               </div>
 
-              {/* Títol i preu */}
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-lg font-medium">{item.name}</h2>
-                <span className="text-emerald-400 font-semibold">
-                  {item.preu}€ / nit
-                </span>
+              {/* TEXT */}
+              <div className="mt-4 md:mt-0 flex-1">
+                {/* Nom + preu */}
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+                  <a
+                    href={`/allotjaments/${item.slug}`}
+                    className="text-lg font-semibold text-teal-300 hover:text-teal-200"
+                  >
+                    {item.nom}
+                  </a>
+
+                  <div className="text-white font-semibold text-lg">
+                    {item.preu_base_nit}€{" "}
+                    <span className="text-neutral-400 text-sm font-normal">
+                      / nit
+                    </span>
+                  </div>
+                </div>
+
+                {/* Poble / capacitat */}
+                <div className="text-neutral-300 text-sm mt-1">
+                  {item.poble} · {item.capacitat_persones} places
+                </div>
+
+                {/* Tipus */}
+                <div className="text-neutral-500 text-xs mt-2">
+                  {item.tipus}
+                </div>
+
+                {/* Descripció curta si existeix */}
+                {item.descripcio_curta && (
+                  <p className="text-neutral-400 text-sm mt-3 line-clamp-3">
+                    {item.descripcio_curta}
+                  </p>
+                )}
+
+                {/* CTA */}
+                <div className="mt-4">
+                  <a
+                    href={`/allotjaments/${item.slug}`}
+                    className="inline-block text-sm font-medium text-white bg-neutral-800 border border-neutral-700 hover:border-neutral-500 rounded-lg px-3 py-2"
+                  >
+                    Veure detalls
+                  </a>
+                </div>
               </div>
-
-              {/* Localització i capacitat */}
-              <p className="text-sm text-neutral-300">
-                {item.poble} ·{" "}
-                {item.persones
-                  ? `${item.persones} places`
-                  : item.tipus === "Càmping"
-                  ? "parcel·les"
-                  : "capacitat variable"}
-              </p>
-
-              {/* Tipus d'allotjament */}
-              <p className="text-xs text-neutral-400 mt-1">
-                {item.tipus}
-              </p>
-            </a>
-          ))}
-        </div>
+            </article>
+          ))
+        )}
       </section>
     </main>
   );
 }
+
