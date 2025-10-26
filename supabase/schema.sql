@@ -81,15 +81,17 @@ create table public.accommodations (
     description text,
     capacity integer not null,
     bedrooms integer,
-    bathrooms numeric(3,1), -- ex: 1.5
+    bathrooms numeric(3,1),
     size_m2 integer,
     base_price_per_night numeric(10,2) not null,
-    images jsonb, -- array de fotos
-    features jsonb, -- { wifi: true, pool: false, ... }
+    cover_image text,          -- ✅ nova: imatge destacada
+    images jsonb,              -- galeria de fotos
+    features jsonb,            -- { wifi: true, pool: false, pets_allowed: true, ... }
     house_rules text,
     is_active boolean not null default true,
     created_at timestamptz not null default now()
 );
+
 
 -- Traduccions d'una accommodation
 create table public.accommodation_translations (
