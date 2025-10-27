@@ -1,159 +1,129 @@
-import Image from "next/image";
-import { getSupabaseServerClient } from "@/lib/supabaseClient";
+"use client";
 
-type Allotjament = {
-  id: number;
-  nom: string;
-  slug: string;
-  tipus: string;
-  poble: string;
-  capacitat_persones: number;
-  preu_base_nit: number;
-  foto_portada_url: string | null;
-  descripcio_curta: string | null;
-};
+import { supabase } from '@/lib/supabaseClient'
+import Link from 'next/link'
 
-export const revalidate = 0;
+type AccommodationRow = {
+  id: string
+  name: string
+  cover_image: string | null
+  base_price_per_night: number
+  capacity: number
+  establishment: {
+    town: string | null
+    name: string
+  } | null
+  rate: {
+    price_per_night: number | null
+  } | null
+}
 
-export default async function AllotjamentsPage() {
-  const supabase = getSupabaseServerClient();
-
+async function getAccommodations(): Promise<AccommodationRow[]> {
   const { data, error } = await supabase
-    .from("allotjaments")
-    .select(
-      [
-        "id",
-        "nom",
-        "slug",
-        "tipus",
-        "poble",
-        "capacitat_persones",
-        "preu_base_nit",
-        "foto_portada_url",
-        "descripcio_curta",
-      ].join(", ")
-    )
-    .order("nom", { ascending: true });
+    .from('accommodations')
+    .select(`
+      id,
+      name,
+      cover_image,
+      base_price_per_night,
+      capacity,
+      establishment:establishments (
+        name,
+        town
+      ),
+      rate:rates (
+        price_per_night
+      )
+    `)
+    .limit(50)
 
   if (error) {
-    console.error("Error carregant allotjaments:", error);
-    return (
-      <main className="max-w-5xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-semibold text-white mb-4">
-          Allotjaments
-        </h1>
-        <p className="text-red-400">
-          No s'han pogut carregar els allotjaments ara mateix.
-        </p>
-      </main>
-    );
+    console.error('Error fetching accommodations:', error)
+    return []
   }
 
-  const allotjaments = (data || []) as Allotjament[];
+  const normalized = (data || []).map((row: any) => {
+    const rateField = Array.isArray(row.rate) ? row.rate[0] : row.rate
+    return {
+      ...row,
+      rate: rateField || null,
+    }
+  })
+
+  return normalized as AccommodationRow[]
+}
+
+export default async function AllotjamentsPage() {
+  const accommodations = await getAccommodations()
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-12">
-      {/* Hero */}
-      <header className="mb-10">
-        <h1 className="text-3xl font-semibold text-white">
-          Allotjaments al Priorat
+    <main className="mx-auto max-w-6xl px-4 py-16">
+      <header className="mb-10 text-center">
+        <h1 className="text-3xl font-semibold text-gray-100">
+          On dormir al Priorat
         </h1>
-        <p className="text-neutral-300 mt-2 text-sm max-w-2xl">
-          Cases rurals legals, hotels tranquils i càmpings petits. Reserva
-          directament amb la gent del territori, sense intermediaris grans.
+        <p className="text-gray-400 mt-2">
+          Cases rurals, bungalous, habitacions amb vistes, allotjaments únics.
         </p>
       </header>
 
-      {/* Cards */}
-      <section className="grid gap-6">
-        {allotjaments.length === 0 ? (
-          <p className="text-neutral-400">
-            Encara no hi ha allotjaments disponibles.
-          </p>
-        ) : (
-          allotjaments.map((item) => (
-            <article
-              key={item.id}
-              className="bg-neutral-900/70 border border-neutral-800 rounded-xl p-4 md:flex md:gap-4 md:items-start shadow-[0_30px_120px_rgba(0,0,0,0.8)]"
-            >
-              {/* FOTO */}
-              <div className="w-full md:w-64 flex-shrink-0">
-                <div className="relative w-full h-48 rounded-lg border border-neutral-800 bg-neutral-900/60 overflow-hidden flex items-center justify-center text-neutral-400 text-sm">
-                  {item.foto_portada_url ? (
-  item.foto_portada_url.includes("via.placeholder.com") ? (
-    // Per URLs que no volem passar per <Image />
-    <img
-      src={item.foto_portada_url}
-      alt={item.nom}
-      className="absolute inset-0 w-full h-full object-cover"
-    />
-  ) : (
-    // Per URLs que sí tenim configurades (Supabase)
-    <Image
-      src={item.foto_portada_url}
-      alt={item.nom}
-      fill
-      className="object-cover"
-    />
-  )
-) : (
-  <span className="text-neutral-500">FOTO</span>
-)}
+      {accommodations.length === 0 ? (
+        <p className="text-center text-gray-500">
+          Encara no hi ha allotjaments disponibles.
+        </p>
+      ) : (
+        <section className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 place-items-center">
+          {accommodations.map((acc) => {
+            const town = acc.establishment?.town || '—'
+            const fromPrice =
+              acc.rate?.price_per_night ??
+              acc.base_price_per_night ??
+              null
 
-                </div>
-              </div>
-
-              {/* TEXT */}
-              <div className="mt-4 md:mt-0 flex-1">
-                {/* Nom + preu */}
-                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
-                  <a
-                    href={`/allotjaments/${item.slug}`}
-                    className="text-lg font-semibold text-teal-300 hover:text-teal-200"
-                  >
-                    {item.nom}
-                  </a>
-
-                  <div className="text-white font-semibold text-lg">
-                    {item.preu_base_nit}€{" "}
-                    <span className="text-neutral-400 text-sm font-normal">
-                      / nit
-                    </span>
-                  </div>
+            return (
+              <Link
+                key={acc.id}
+                href={`/allotjaments/${acc.id}`}
+                className="w-full max-w-sm overflow-hidden rounded-2xl border border-gray-800 bg-white text-gray-900 shadow-sm hover:shadow-lg transition-shadow block"
+              >
+                <div className="relative h-48 w-full overflow-hidden bg-gray-200">
+                  {acc.cover_image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={acc.cover_image}
+                      alt={acc.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-gray-500 text-sm">
+                      (Sense imatge)
+                    </div>
+                  )}
                 </div>
 
-                {/* Poble / capacitat */}
-                <div className="text-neutral-300 text-sm mt-1">
-                  {item.poble} · {item.capacitat_persones} places
-                </div>
+                <div className="p-5">
+                  <h2 className="text-lg font-semibold text-gray-900 leading-snug line-clamp-2">
+                    {acc.name}
+                  </h2>
 
-                {/* Tipus */}
-                <div className="text-neutral-500 text-xs mt-2">
-                  {item.tipus}
-                </div>
+                  <p className="text-sm text-gray-600 mt-2">{town}</p>
 
-                {/* Descripció curta si existeix */}
-                {item.descripcio_curta && (
-                  <p className="text-neutral-400 text-sm mt-3 line-clamp-3">
-                    {item.descripcio_curta}
+                  <p className="text-sm text-gray-600">
+                    Capacitat: {acc.capacity}{' '}
+                    {acc.capacity === 1 ? 'persona' : 'persones'}
                   </p>
-                )}
 
-                {/* CTA */}
-                <div className="mt-4">
-                  <a
-                    href={`/allotjaments/${item.slug}`}
-                    className="inline-block text-sm font-medium text-white bg-neutral-800 border border-neutral-700 hover:border-neutral-500 rounded-lg px-3 py-2"
-                  >
-                    Veure detalls
-                  </a>
+                  {fromPrice !== null && (
+                    <p className="mt-4 text-base font-medium text-gray-900">
+                      des de {fromPrice} € / nit
+                    </p>
+                  )}
                 </div>
-              </div>
-            </article>
-          ))
-        )}
-      </section>
+              </Link>
+            )
+          })}
+        </section>
+      )}
     </main>
-  );
+  )
 }
-
