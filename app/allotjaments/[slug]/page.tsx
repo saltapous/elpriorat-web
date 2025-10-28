@@ -1,7 +1,5 @@
 // app/allotjaments/[slug]/page.tsx
 
-// app/allotjaments/[slug]/page.tsx
-
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { allotjaments } from "@/data/allotjaments";
@@ -12,8 +10,17 @@ type Props = {
   };
 };
 
+// Necessari per export estàtic amb rutes dinàmiques
+export function generateStaticParams() {
+  return allotjaments.map((a) => ({
+    slug: a.slug,
+  }));
+}
+
+// Fem la pàgina async per satisfèr Next 15 en mode export
 export default async function AllotjamentDetallPage({ params }: Props) {
-  const { slug } = params; // agafem el slug de la URL
+  // fem "await" per satisfer Next encara que sigui síncron en realitat
+  const { slug } = await params;
 
   const hotel = allotjaments.find((a) => a.slug === slug);
 
