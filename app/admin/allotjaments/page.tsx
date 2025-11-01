@@ -1,108 +1,91 @@
 // app/admin/allotjaments/page.tsx
-import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import Link from "next/link";
-
-export const dynamic = "force-dynamic";
+import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 
 export default async function AdminAllotjamentsPage() {
-  const supabase = await supabaseServerReadOnly();
+  const supabase = supabaseServerReadOnly();
 
-  const { data, error } = await supabase
+  const { data: accommodations, error } = await supabase
     .from("accommodations")
-    .select(`
+    .select(
+      `
       id,
-      name,
       slug,
-      base_price,
-      capacity,
-      type,
-      status,
+      name,
       is_active,
-      created_at,
-      establishments (
-        name,
-        town,
-        region
-      )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("[/admin/allotjaments] Supabase error:", error);
-  }
-
-  const allotjaments = data ?? [];
+      base_price,
+      establishments ( id, name, town )
+    `
+    )
+    .order("name");
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Panell d’allotjaments</h1>
-          <Link
-            href="/admin/allotjaments/nou"
-            className="bg-amber-400 text-neutral-900 font-medium px-4 py-2 rounded-lg hover:bg-amber-300 transition"
-          >
-            + Nou allotjament
-          </Link>
-        </header>
+    <main className="max-w-5xl mx-auto py-10 px-4 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-white">Allotjaments</h1>
+        <Link
+          href="/admin/allotjaments/nou"
+          className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+        >
+          + Nou allotjament
+        </Link>
+      </div>
 
-        {allotjaments.length === 0 ? (
-          <p className="text-neutral-400">Encara no hi ha allotjaments.</p>
-        ) : (
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="text-left border-b border-neutral-800 text-neutral-400">
-                <th className="py-2">Nom</th>
-                <th className="py-2">Establiment</th>
-                <th className="py-2">Capacitat</th>
-                <th className="py-2">Preu base</th>
-                <th className="py-2">Estat</th>
-                <th className="py-2 text-right">Accions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allotjaments.map((a) => (
-                <tr
-                  key={a.id}
-                  className="border-b border-neutral-900 hover:bg-neutral-900/50 transition"
+      <div className="rounded border border-neutral-800 divide-y divide-neutral-800 bg-neutral-900/40">
+        {(accommodations ?? []).map((acc) => (
+          <div
+            key={acc.id}
+            className="p-4 flex items-center justify-between gap-4"
+          >
+            <div>
+              {/* 👇 ara també és enllaç al detall/edit */}
+              <Link
+                href={`/admin/allotjaments/${acc.slug}`}
+                className="text-white font-medium hover:underline"
+              >
+                {acc.name}
+              </Link>
+              <p className="text-sm text-neutral-400">
+                {acc.establishments
+                  ? acc.establishments.name +
+                    (acc.establishments.town
+                      ? " · " + acc.establishments.town
+                      : "")
+                  : "Sense establiment"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-neutral-200">
+                  {acc.base_price ? `${acc.base_price} €` : "—"}
+                </p>
+                <p
+                  className={`text-xs ${
+                    acc.is_active ? "text-green-300" : "text-red-300"
+                  }`}
                 >
-                  <td className="py-2 font-medium">{a.name}</td>
-                  <td className="py-2 text-neutral-400">
-                    {a.establishments?.name
-                      ? `${a.establishments.name}${
-                          a.establishments.town
-                            ? ` (${a.establishments.town})`
-                            : ""
-                        }`
-                      : "-"}
-                  </td>
-                  <td className="py-2">{a.capacity || "-"}</td>
-                  <td className="py-2">
-                    {a.base_price ? `${a.base_price} €` : "-"}
-                  </td>
-                  <td className="py-2">
-                    {a.is_active ? (
-                      <span className="text-green-400">Actiu</span>
-                    ) : (
-                      <span className="text-neutral-500">Inactiu</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    <Link
-                      href={`/admin/allotjaments/${a.id}`}
-                      className="text-amber-400 hover:text-amber-300 underline underline-offset-2"
-                    >
-                      Editar
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  {acc.is_active ? "Actiu" : "Inactiu"}
+                </p>
+              </div>
+              <Link
+                href={`/admin/allotjaments/${acc.slug}`}
+                className="text-xs px-3 py-1 rounded border border-neutral-600 text-neutral-100 hover:bg-neutral-800"
+              >
+                Edita
+              </Link>
+            </div>
+          </div>
+        ))}
+
+        {!accommodations?.length && (
+          <p className="p-4 text-neutral-500">Encara no hi ha allotjaments.</p>
         )}
       </div>
     </main>
   );
 }
+
+
 
 

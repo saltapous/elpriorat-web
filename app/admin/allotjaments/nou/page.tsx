@@ -1,11 +1,13 @@
 // app/admin/allotjaments/nou/page.tsx
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import { createAccommodation } from "../actions";
 import Link from "next/link";
 
 export default async function NouAllotjamentPage() {
-  const supabase = supabaseServer();
-  const { data: establishments } = await supabase
+  // 👇 llegim amb el client de només lectura
+  const supabase = supabaseServerReadOnly();
+
+  const { data: establishments, error } = await supabase
     .from("establishments")
     .select("id, name, town")
     .order("name");
@@ -83,6 +85,14 @@ export default async function NouAllotjamentPage() {
             name="establishment_id"
             required
             className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100"
+            // si ve de /admin/allotjaments/nou?establishment_id=...
+            defaultValue={
+              typeof window === "undefined"
+                ? undefined
+                : new URLSearchParams(window.location.search).get(
+                    "establishment_id"
+                  ) ?? ""
+            }
           >
             <option value="">— Selecciona —</option>
             {establishments?.map((est) => (
@@ -91,6 +101,11 @@ export default async function NouAllotjamentPage() {
               </option>
             ))}
           </select>
+          {error ? (
+            <p className="text-red-400 text-sm mt-1">
+              No s’han pogut carregar els establiments.
+            </p>
+          ) : null}
         </div>
 
         <button

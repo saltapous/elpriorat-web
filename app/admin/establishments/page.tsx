@@ -1,100 +1,83 @@
 // app/admin/establishments/page.tsx
-import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import Link from "next/link";
+import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 
-export const dynamic = "force-dynamic";
+export default async function EstablishmentsPage() {
+  const supabase = supabaseServerReadOnly();
 
-export default async function AdminEstablishmentsPage() {
-  const supabase = await supabaseServerReadOnly();
-
-  const { data, error } = await supabase
+  const { data: establishments, error } = await supabase
     .from("establishments")
-    .select(
-      `
+    .select(`
       id,
       name,
       town,
       region,
-      address,
-      phone,
-      email,
-      website,
-      is_active
-    `
-    )
-    .order("name", { ascending: true });
+      is_active,
+      owners ( name )
+    `)
+    .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("[/admin/establishments] supabase error:", error);
+    console.error("[admin/establishments]", error);
   }
 
-  const establishments = data ?? [];
-
   return (
-    <main className="min-h-screen px-6 py-8 bg-neutral-950 text-neutral-100">
-      <div className="max-w-6xl mx-auto">
-        <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Establiments</h1>
-          <Link
-            href="/admin/establishments/nou"
-            className="bg-amber-400 text-neutral-900 font-medium px-4 py-2 rounded-lg hover:bg-amber-300 transition"
-          >
-            + Nou establiment
-          </Link>
-        </header>
+    <main className="max-w-5xl mx-auto py-10 px-4 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-white">Establiments</h1>
+        <Link
+          href="/admin/establishments/nou"
+          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
+        >
+          + Nou establiment
+        </Link>
+      </div>
 
-        {establishments.length === 0 ? (
-          <p className="text-neutral-400">Encara no hi ha establiments.</p>
-        ) : (
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="text-left border-b border-neutral-800 text-neutral-400">
-                <th className="py-2">Nom</th>
-                <th className="py-2">Poble / regió</th>
-                <th className="py-2">Telèfon</th>
-                <th className="py-2">Email</th>
-                <th className="py-2">Web</th>
-                <th className="py-2">Estat</th>
-                <th className="py-2 text-right">Accions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {establishments.map((est) => (
-                <tr
-                  key={est.id}
-                  className="border-b border-neutral-900 hover:bg-neutral-900/40"
-                >
-                  <td className="py-2 font-medium">{est.name}</td>
-                  <td className="py-2 text-neutral-300">
-                    {est.town ? est.town : "-"}
-                    {est.region ? ` (${est.region})` : ""}
-                  </td>
-                  <td className="py-2">{est.phone || "-"}</td>
-                  <td className="py-2">{est.email || "-"}</td>
-                  <td className="py-2">{est.website || "-"}</td>
-                  <td className="py-2">
-                    {est.is_active ? (
-                      <span className="text-green-400">Actiu</span>
-                    ) : (
-                      <span className="text-neutral-500">Inactiu</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    <Link
-                      href={`/admin/establishments/${est.id}`}
-                      className="text-amber-400 hover:text-amber-300 underline underline-offset-2"
-                    >
-                      Editar
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="rounded border border-neutral-800 divide-y divide-neutral-800 bg-neutral-900/40">
+        {(establishments ?? []).map((est) => (
+          <div
+            key={est.id}
+            className="p-4 flex items-center justify-between gap-4"
+          >
+            <div>
+              <p className="text-white font-medium">{est.name}</p>
+              <p className="text-sm text-neutral-400">
+                {est.town || "Sense poble"} · {est.region || "Sense comarca"}
+              </p>
+              <p className="text-xs text-neutral-500">
+                Propietari: {est.owners?.name || "—"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* 👇 aquí sí que surt l’estat */}
+              <p
+                className={`text-xs ${
+                  est.is_active ? "text-green-300" : "text-red-300"
+                }`}
+              >
+                {est.is_active ? "Actiu" : "Inactiu"}
+              </p>
+
+              <Link
+                href={`/admin/establishments/${est.id}`}
+                className="text-sm px-3 py-1 rounded border border-neutral-700 hover:bg-neutral-800"
+              >
+                Edita
+              </Link>
+            </div>
+          </div>
+        ))}
+
+        {!establishments?.length && (
+          <p className="p-4 text-neutral-500">
+            Encara no hi ha establiments creats.
+          </p>
         )}
       </div>
     </main>
   );
 }
+
 
 

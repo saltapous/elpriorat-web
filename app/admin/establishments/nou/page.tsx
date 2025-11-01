@@ -1,117 +1,77 @@
 // app/admin/establishments/nou/page.tsx
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import { createEstablishment } from "../actions";
-import Link from "next/link";
 
-export default async function NouEstablimentPage() {
-  const supabase = supabaseServer();
+export default async function NouEstablishmentPage() {
+  const supabase = supabaseServerReadOnly();
   const { data: owners } = await supabase
     .from("owners")
     .select("id, name")
     .order("name");
 
   return (
-    <main className="max-w-3xl mx-auto py-10 px-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Nou establiment</h1>
-        <Link
-          href="/admin/owners/nou"
-          className="text-sm text-blue-400 hover:text-blue-200"
-        >
-          + Nou propietari
-        </Link>
-      </div>
+    <main className="max-w-2xl mx-auto py-10 px-4 space-y-6">
+      <h1 className="text-2xl font-semibold text-white">Nou establiment</h1>
 
       <form action={createEstablishment} className="space-y-4">
         <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
-            Nom
-          </label>
+          <label className="block mb-1 text-sm text-neutral-200">Nom</label>
           <input
             name="name"
             required
-            className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-            placeholder="Mas de la Serra"
+            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
           />
         </div>
 
         <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
+          <label className="block mb-1 text-sm text-neutral-200">
             Propietari
           </label>
           <select
             name="owner_id"
             required
-            className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100"
+            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
           >
             <option value="">— Selecciona —</option>
-            {owners?.map((o) => (
+            {(owners ?? []).map((o) => (
               <option key={o.id} value={o.id}>
                 {o.name}
               </option>
             ))}
           </select>
-          {!owners?.length ? (
-            <p className="text-xs text-red-400 mt-1">
-              No hi ha propietaris. Crea’n un primer.
-            </p>
-          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block mb-1 text-sm font-medium text-neutral-200">
-              Població
-            </label>
+            <label className="block mb-1 text-sm text-neutral-200">Poble</label>
             <input
               name="town"
-              className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-              placeholder="El Masroig"
+              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium text-neutral-200">
-              Comarca
+            <label className="block mb-1 text-sm text-neutral-200">
+              Comarca / zona
             </label>
             <input
               name="region"
-              className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-              placeholder="Priorat"
+              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
             />
           </div>
         </div>
 
-        <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
-            Adreça
-          </label>
+        {/* 👇 nou */}
+        <div className="flex items-center gap-2">
           <input
-            name="address"
-            className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-            placeholder="Camí de..."
+            id="is_active"
+            name="is_active"
+            type="checkbox"
+            defaultChecked
+            className="w-4 h-4"
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-1 text-sm font-medium text-neutral-200">
-              Telèfon
-            </label>
-            <input
-              name="phone"
-              className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm font-medium text-neutral-200">
-              Web
-            </label>
-            <input
-              name="website"
-              className="w-full rounded bg-neutral-900 border border-neutral-700 px-3 py-2 text-neutral-100 placeholder:text-neutral-500"
-              placeholder="https://..."
-            />
-          </div>
+          <label htmlFor="is_active" className="text-sm text-neutral-200">
+            Actiu
+          </label>
         </div>
 
         <button
@@ -124,3 +84,4 @@ export default async function NouEstablimentPage() {
     </main>
   );
 }
+
