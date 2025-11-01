@@ -2,61 +2,50 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
 /**
- * Mode COMPLET: llegeix i POT ESCRIURE cookies.
- * Usa'l a /admin, auth, etc.
+ * 👉 Client de LECTURA per a pàgines (usa cookies amb getAll/setAll)
+ * El fem servir a: app/allotjaments/page.tsx, ... etc.
  */
-export async function supabaseServer() {
-  const cookieStore = await cookies();
+export function supabaseServerReadOnly() {
+  const cookieStore = cookies();
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        // ⚠️ aquestes 2 només funcionen en server actions / route handlers
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options);
-        },
-        remove(name: string, options: any) {
-          cookieStore.set(name, "", { ...options, maxAge: 0 });
-        },
+  return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }
-  );
-
-  return supabase;
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // en dev pot no deixar, no passa res
+        }
+      },
+    },
+  });
 }
 
 /**
- * Mode LECTURA: només llegeix cookies, no n’escriu.
- * Usa'l a pàgines públiques (com /allotjaments/[slug])
+ * 👉 Client d'ADMIN per a server actions
+ * NO toca cookies → no hi ha error de `cookies().get(...)`
+ * Usa la service role → pot fer INSERT encara que hi hagi RLS
  */
-export async function supabaseServerReadOnly() {
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        // 👇 aquestes 2 són no-op perquè Next no deixa escriure aquí
-        set() {
-          // no-op
-        },
-        remove() {
-          // no-op
-        },
+export function supabaseAdmin() {
+  return createServerClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    cookies: {
+      // no llegim ni escrivim cookies en les actions
+      getAll() {
+        return [];
       },
-    }
-  );
-
-  return supabase;
+      setAll() {
+        // noop
+      },
+    },
+  });
 }
-
