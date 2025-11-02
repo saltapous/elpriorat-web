@@ -5,7 +5,7 @@ import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 export const dynamic = "force-dynamic";
 
 export default async function AdminOwnersPage() {
-  const supabase = supabaseServerReadOnly();
+  const supabase = await supabaseServerReadOnly();
 
   const { data: owners, error } = await supabase
     .from("owners")

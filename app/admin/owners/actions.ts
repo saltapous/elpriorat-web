@@ -1,103 +1,84 @@
 // app/admin/owners/actions.ts
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabaseServer";
 
 export async function createOwner(formData: FormData) {
-  const name = formData.get("name")?.toString().trim();
-  const email = formData.get("email")?.toString().trim() || null;
-  const phone = formData.get("phone")?.toString().trim() || null;
-  const is_active = formData.get("is_active") === "on";
+  const name = (formData.get("name") as string)?.trim();
+  let email = (formData.get("email") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim() || null;
+  const notes = (formData.get("notes") as string)?.trim() || null;
+  const is_active_raw = formData.get("is_active");
+  const is_active = is_active_raw === "on" || is_active_raw === "true";
 
-  if (!name) throw new Error("El nom és obligatori");
+  if (!name) {
+    throw new Error("El nom és obligatori.");
+  }
 
-  const supabase = supabaseAdmin();
+  // 👇 LA CLAU: com que la columna és NOT NULL, si ve buit → ""
+  if (!email) {
+    email = "";
+  }
 
-  const { data, error } = await supabase
-    .from("owners")
-    .insert({ name, email, phone, is_active })
-    .select("id")
-    .single();
+  const supabase = await supabaseAdmin();
+
+  const { error } = await supabase.from("owners").insert({
+    name,
+    email,
+    phone,
+    notes,
+    is_active,
+  });
 
   if (error) {
-    console.error("[createOwner]", error);
+    console.error("[createOwner] error:", error.message);
     throw new Error(error.message);
   }
 
-  // si el crees ja inactiu, cascada cap avall
-  if (!is_active && data?.id) {
-    await supabase.from("establishments").update({ is_active: false }).eq("owner_id", data.id);
-    await supabase
-      .from("accommodations")
-      .update({ is_active: false })
-      .in(
-        "establishment_id",
-        (
-          await supabase
-            .from("establishments")
-            .select("id")
-            .eq("owner_id", data.id)
-        ).data?.map((e) => e.id) ?? []
-      );
-  }
-
+  revalidatePath("/admin/owners");
   redirect("/admin/owners");
 }
 
-export async function updateOwner(formData: FormData) {
-  const id = formData.get("id")?.toString();
-  const name = formData.get("name")?.toString().trim();
-  const email = formData.get("email")?.toString().trim() || null;
-  const phone = formData.get("phone")?.toString().trim() || null;
-  const is_active = formData.get("is_active") === "on";
+export async function updateOwner(id: string, formData: FormData) {
+  const name = (formData.get("name") as string)?.trim();
+  let email = (formData.get("email") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim() || null;
+  const notes = (formData.get("notes") as string)?.trim() || null;
+  const is_active_raw = formData.get("is_active");
+  const is_active = is_active_raw === "on" || is_active_raw === "true";
 
-  if (!id) throw new Error("Falta l'id del propietari");
-  if (!name) throw new Error("El nom és obligatori");
+  if (!id) throw new Error("Falta l'ID del propietari.");
+  if (!name) throw new Error("El nom és obligatori.");
 
-  const supabase = supabaseAdmin();
+  if (!email) {
+    email = "";
+  }
+
+  const supabase = await supabaseAdmin();
 
   const { error } = await supabase
     .from("owners")
-    .update({ name, email, phone, is_active })
+    .update({
+      name,
+      email,
+      phone,
+      notes,
+      is_active,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
 
   if (error) {
-    console.error("[updateOwner]", error);
+    console.error("[updateOwner] error:", error.message);
     throw new Error(error.message);
   }
 
-  // cascada activació/desactivació
-  if (is_active === false) {
-    // owner OFF → tot OFF
-    const { data: estabs } = await supabase
-      .from("establishments")
-      .update({ is_active: false })
-      .eq("owner_id", id)
-      .select("id");
-
-    const estabIds = estabs?.map((e) => e.id) ?? [];
-
-    if (estabIds.length) {
-      await supabase.from("accommodations").update({ is_active: false }).in("establishment_id", estabIds);
-    }
-  } else {
-    // owner ON → només ON els establiments + allotjaments d'aquest
-    const { data: estabs } = await supabase
-      .from("establishments")
-      .update({ is_active: true })
-      .eq("owner_id", id)
-      .select("id");
-
-    const estabIds = estabs?.map((e) => e.id) ?? [];
-
-    if (estabIds.length) {
-      await supabase.from("accommodations").update({ is_active: true }).in("establishment_id", estabIds);
-    }
-  }
-
+  revalidatePath("/admin/owners");
   redirect("/admin/owners");
 }
+
 
 
 

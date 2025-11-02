@@ -19,12 +19,11 @@ export default async function AdminEstablishmentEditPage({
 
   // 👇 IMPORTANT: aquí hi ha d’haver "email"
   const { data: establishment } = await supabase
-    .from("establishments")
-    .select(
-      "id, name, description, address, town, region, phone, email, website, owner_id, is_active"
-    )
-    .eq("id", id)
-    .maybeSingle();
+  .from("establishments")
+  .select("id, name, owner_id, town, region, phone, email, website, is_active, owners (is_active)")
+  .eq("id", id)
+  .single();
+
 
   if (!establishment) return notFound();
 
@@ -182,16 +181,24 @@ export default async function AdminEstablishmentEditPage({
 
           {/* Actiu */}
           <div className="flex items-center gap-2">
+           <label className="flex items-center gap-2 text-sm">
             <input
-              id="is_active"
               type="checkbox"
               name="is_active"
-              defaultChecked={establishment.is_active ?? true}
+              defaultChecked={establishment.is_active}
+              disabled={establishment.owners?.is_active === false}
               className="h-4 w-4"
             />
-            <label htmlFor="is_active" className="text-sm text-neutral-100">
+            <span>
               Actiu
-            </label>
+              {establishment.owners?.is_active === false ? (
+                <span className="ml-2 text-xs text-orange-500">
+                  (no es pot activar: propietari inactiu)
+            </span>
+    ) : null}
+  </span>
+</label>
+
           </div>
 
           <button
