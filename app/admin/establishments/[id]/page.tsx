@@ -3,110 +3,205 @@ import { notFound } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import { updateEstablishment } from "../actions";
 
-export default async function EditEstablishmentPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const supabase = supabaseServerReadOnly();
+export const dynamic = "force-dynamic";
 
-  // establiment
+export default async function AdminEstablishmentEditPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { id } = await params;
+  const { error: errorMsg } = await searchParams;
+
+  const supabase = await supabaseServerReadOnly();
+
+  // 👇 IMPORTANT: aquí hi ha d’haver "email"
   const { data: establishment } = await supabase
     .from("establishments")
-    .select("id, name, town, region, owner_id, is_active")
-    .eq("id", params.id)
+    .select(
+      "id, name, description, address, town, region, phone, email, website, owner_id, is_active"
+    )
+    .eq("id", id)
     .maybeSingle();
 
-  if (!establishment) {
-    return notFound();
-  }
+  if (!establishment) return notFound();
 
-  // propietaris per al <select>
   const { data: owners } = await supabase
     .from("owners")
     .select("id, name")
-    .order("name");
+    .order("name", { ascending: true });
 
   return (
-    <main className="max-w-2xl mx-auto py-10 px-4 space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Editar establiment</h1>
-
-      <form action={updateEstablishment} className="space-y-4">
-        <input type="hidden" name="id" value={establishment.id} />
-
-        <div>
-          <label className="block mb-1 text-sm text-neutral-200">Nom</label>
-          <input
-            name="name"
-            defaultValue={establishment.name ?? ""}
-            required
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm text-neutral-200">
-            Propietari
-          </label>
-          <select
-            name="owner_id"
-            defaultValue={establishment.owner_id ?? ""}
-            required
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <a
+            href="/admin/establishments"
+            className="text-sm text-neutral-300 hover:text-white"
           >
-            <option value="">— Selecciona —</option>
-            {(owners ?? []).map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
+            ← Tornar
+          </a>
+          <h1 className="text-xl font-semibold text-neutral-50">
+            Editar establiment
+          </h1>
         </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
+      {errorMsg ? (
+        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-100">
+          {decodeURIComponent(errorMsg)}
+        </div>
+      ) : null}
+
+      <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-6 space-y-4">
+        <form action={updateEstablishment} className="space-y-4">
+          <input type="hidden" name="id" value={establishment.id} />
+
+          {/* Nom */}
           <div>
-            <label className="block mb-1 text-sm text-neutral-200">Poble</label>
-            <input
-              name="town"
-              defaultValue={establishment.town ?? ""}
-              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm text-neutral-200">
-              Comarca / zona
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Nom
             </label>
             <input
-              name="region"
-              defaultValue={establishment.region ?? ""}
-              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
+              name="name"
+              defaultValue={establishment.name ?? ""}
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
-        </div>
 
-        {/* 👇 aquí el checkbox que et faltava */}
-        <div className="flex items-center gap-2">
-          <input
-            id="is_active"
-            name="is_active"
-            type="checkbox"
-            defaultChecked={establishment.is_active ?? true}
-            className="w-4 h-4"
-          />
-          <label htmlFor="is_active" className="text-sm text-neutral-200">
-            Actiu
-          </label>
-        </div>
+          {/* Descripció */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Descripció
+            </label>
+            <textarea
+              name="description"
+              defaultValue={establishment.description ?? ""}
+              rows={4}
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
-        >
-          Desa canvis
-        </button>
-      </form>
-    </main>
+          {/* Adreça */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Adreça
+            </label>
+            <input
+              name="address"
+              defaultValue={establishment.address ?? ""}
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Poble / Comarca */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-100 mb-1">
+                Poble
+              </label>
+              <input
+                name="town"
+                defaultValue={establishment.town ?? ""}
+                className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-100 mb-1">
+                Comarca / zona
+              </label>
+              <input
+                name="region"
+                defaultValue={establishment.region ?? ""}
+                className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* Telèfon */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Telèfon *
+            </label>
+            <input
+              name="phone"
+              defaultValue={establishment.phone ?? ""}
+              required
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* 👇 EMAIL — aquí ha de sortir el que tens a la BBDD */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Email *
+            </label>
+            <input
+              name="email"
+              type="email"
+              required
+              suppressHydrationWarning
+              defaultValue={establishment.email ?? ""}
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Web */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Web
+            </label>
+            <input
+              name="website"
+              defaultValue={establishment.website ?? ""}
+              placeholder="https://..."
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Propietari */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Propietari
+            </label>
+            <select
+              name="owner_id"
+              defaultValue={establishment.owner_id ?? ""}
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">— Sense propietari —</option>
+              {owners?.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Actiu */}
+          <div className="flex items-center gap-2">
+            <input
+              id="is_active"
+              type="checkbox"
+              name="is_active"
+              defaultChecked={establishment.is_active ?? true}
+              className="h-4 w-4"
+            />
+            <label htmlFor="is_active" className="text-sm text-neutral-100">
+              Actiu
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-md bg-sky-600 hover:bg-sky-500 px-4 py-2 text-sm font-medium text-white"
+          >
+            Desa canvis
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
-
-

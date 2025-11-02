@@ -2,87 +2,97 @@
 import Link from "next/link";
 import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAllotjamentsPage() {
   const supabase = supabaseServerReadOnly();
 
-  const { data: accommodations, error } = await supabase
+  const { data: accs, error } = await supabase
     .from("accommodations")
     .select(
       `
-      id,
-      slug,
-      name,
-      is_active,
-      base_price,
-      establishments ( id, name, town )
-    `
+        id,
+        slug,
+        name,
+        is_active,
+        establishments (
+          id,
+          name,
+          town
+        )
+      `
     )
-    .order("name");
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("[admin accommodations] error:", error);
+  }
 
   return (
-    <main className="max-w-5xl mx-auto py-10 px-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Allotjaments</h1>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Allotjaments</h1>
         <Link
           href="/admin/allotjaments/nou"
-          className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+          className="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded text-sm"
         >
           + Nou allotjament
         </Link>
       </div>
 
-      <div className="rounded border border-neutral-800 divide-y divide-neutral-800 bg-neutral-900/40">
-        {(accommodations ?? []).map((acc) => (
-          <div
-            key={acc.id}
-            className="p-4 flex items-center justify-between gap-4"
-          >
-            <div>
-              {/* 👇 ara també és enllaç al detall/edit */}
-              <Link
-                href={`/admin/allotjaments/${acc.slug}`}
-                className="text-white font-medium hover:underline"
-              >
-                {acc.name}
-              </Link>
-              <p className="text-sm text-neutral-400">
-                {acc.establishments
-                  ? acc.establishments.name +
-                    (acc.establishments.town
-                      ? " · " + acc.establishments.town
-                      : "")
-                  : "Sense establiment"}
-              </p>
-            </div>
+      <div className="bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-neutral-800 text-left">
+            <tr>
+              <th className="px-4 py-2">Nom</th>
+              <th className="px-4 py-2">Establiment</th>
+              <th className="px-4 py-2">Slug</th>
+              <th className="px-4 py-2">Estat</th>
+              <th className="px-4 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {accs?.map((acc) => (
+              <tr key={acc.id} className="border-t border-neutral-800">
+                <td className="px-4 py-2">{acc.name}</td>
+                <td className="px-4 py-2">
+                  {acc.establishments
+                    ? `${acc.establishments.name} (${acc.establishments.town})`
+                    : "—"}
+                </td>
+                <td className="px-4 py-2">{acc.slug}</td>
+                <td className="px-4 py-2">
+                  {acc.is_active ? (
+                    <span className="text-green-400">Actiu</span>
+                  ) : (
+                    <span className="text-red-400">Inactiu</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 text-right">
+                  <Link
+                    href={`/admin/allotjaments/${acc.slug}`}
+                    className="text-blue-400 hover:underline"
+                  >
+                    Editar
+                  </Link>
+                </td>
+              </tr>
+            ))}
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm text-neutral-200">
-                  {acc.base_price ? `${acc.base_price} €` : "—"}
-                </p>
-                <p
-                  className={`text-xs ${
-                    acc.is_active ? "text-green-300" : "text-red-300"
-                  }`}
+            {!accs?.length && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-6 text-center text-neutral-400"
                 >
-                  {acc.is_active ? "Actiu" : "Inactiu"}
-                </p>
-              </div>
-              <Link
-                href={`/admin/allotjaments/${acc.slug}`}
-                className="text-xs px-3 py-1 rounded border border-neutral-600 text-neutral-100 hover:bg-neutral-800"
-              >
-                Edita
-              </Link>
-            </div>
-          </div>
-        ))}
-
-        {!accommodations?.length && (
-          <p className="p-4 text-neutral-500">Encara no hi ha allotjaments.</p>
-        )}
+                  No hi ha allotjaments.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-    </main>
+    </div>
   );
 }
 

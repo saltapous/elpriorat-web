@@ -2,86 +2,146 @@
 import { supabaseServerReadOnly } from "@/lib/supabaseServer";
 import { createEstablishment } from "../actions";
 
-export default async function NouEstablishmentPage() {
-  const supabase = supabaseServerReadOnly();
+export const dynamic = "force-dynamic";
+
+export default async function AdminNewEstablishmentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error: errorMsg } = await searchParams;
+
+  const supabase = await supabaseServerReadOnly();
   const { data: owners } = await supabase
     .from("owners")
     .select("id, name")
-    .order("name");
+    .order("name", { ascending: true });
 
   return (
-    <main className="max-w-2xl mx-auto py-10 px-4 space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Nou establiment</h1>
+    <div className="max-w-3xl mx-auto">
+      <h1 className="text-2xl font-semibold text-neutral-50 mb-6">
+        Nou establiment
+      </h1>
 
-      <form action={createEstablishment} className="space-y-4">
-        <div>
-          <label className="block mb-1 text-sm text-neutral-200">Nom</label>
-          <input
-            name="name"
-            required
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-          />
+      {errorMsg ? (
+        <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-100">
+          {decodeURIComponent(errorMsg)}
         </div>
+      ) : null}
 
-        <div>
-          <label className="block mb-1 text-sm text-neutral-200">
-            Propietari
-          </label>
-          <select
-            name="owner_id"
-            required
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-          >
-            <option value="">— Selecciona —</option>
-            {(owners ?? []).map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+      <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-6 space-y-4">
+        <form action={createEstablishment} className="space-y-4">
+          {/* Nom */}
           <div>
-            <label className="block mb-1 text-sm text-neutral-200">Poble</label>
-            <input
-              name="town"
-              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-            />
-          </div>
-          <div>
-            <label className="block mb-1 text-sm text-neutral-200">
-              Comarca / zona
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Nom
             </label>
             <input
-              name="region"
-              className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
+              name="name"
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
             />
           </div>
-        </div>
 
-        {/* 👇 nou */}
-        <div className="flex items-center gap-2">
-          <input
-            id="is_active"
-            name="is_active"
-            type="checkbox"
-            defaultChecked
-            className="w-4 h-4"
-          />
-          <label htmlFor="is_active" className="text-sm text-neutral-200">
-            Actiu
-          </label>
-        </div>
+          {/* Propietari */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Propietari
+            </label>
+            <select
+              name="owner_id"
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            >
+              <option value="">— Sense propietari —</option>
+              {owners?.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <button
-          type="submit"
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
-        >
-          Crear establiment
-        </button>
-      </form>
-    </main>
+          {/* Poble / Comarca */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-100 mb-1">
+                Poble
+              </label>
+              <input
+                name="town"
+                className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-100 mb-1">
+                Comarca / zona
+              </label>
+              <input
+                name="region"
+                className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+            </div>
+          </div>
+
+          {/* Telèfon */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Telèfon *
+            </label>
+            <input
+              name="phone"
+              required
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Email (ABANS de web) */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Email *
+            </label>
+            <input
+              name="email"     // 👈 NOM EXACTE QUE LLEGEIX L’ACTION
+              type="email"
+              required
+              suppressHydrationWarning
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Web (opcional) */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-100 mb-1">
+              Web
+            </label>
+            <input
+              name="website"
+              placeholder="https://..."
+              className="w-full rounded-md bg-neutral-950 border border-neutral-800 px-3 py-2 text-neutral-50 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            />
+          </div>
+
+          {/* Actiu */}
+          <div className="flex items-center gap-2">
+            <input
+              id="is_active"
+              type="checkbox"
+              name="is_active"
+              defaultChecked
+              className="h-4 w-4"
+            />
+            <label htmlFor="is_active" className="text-sm text-neutral-100">
+              Actiu
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center rounded-md bg-sky-600 hover:bg-sky-500 px-4 py-2 text-sm font-medium text-white"
+          >
+            Crear establiment
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
-

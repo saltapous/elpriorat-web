@@ -1,86 +1,97 @@
+// app/admin/owners/[id]/page.tsx
+
 import { notFound } from "next/navigation";
 import { supabaseServerReadOnly } from "@/lib/supabaseServer";
-import { updateOwner } from "../actions";
 
-type Props = {
-  params: { id: string };
+type PageProps = {
+  params: {
+    id: string;
+  };
 };
 
-export default async function EditOwnerPage({ params }: Props) {
-  const supabase = supabaseServerReadOnly();
+export const dynamic = "force-dynamic";
 
-  const { data: owner } = await supabase
+export default async function AdminOwnerEditPage({ params }: PageProps) {
+  const { id } = params;
+
+  // 👇 IMPORTANT: sense això tornava el mateix error que amb allotjaments
+  const supabase = await supabaseServerReadOnly();
+
+  // 1. Carreguem l'owner
+  const { data: owner, error } = await supabase
     .from("owners")
     .select("id, name, email, phone, is_active")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
+
+  if (error) {
+    console.error("[/admin/owners/[id]] error:", error.message);
+  }
 
   if (!owner) {
     return notFound();
   }
 
   return (
-    <main className="max-w-2xl mx-auto py-10 px-4 space-y-6">
-      <h1 className="text-2xl font-semibold text-white">Editar propietari</h1>
+    <main className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-4">
+        Editar propietari: {owner.name}
+      </h1>
 
-      {/* MOLT IMPORTANT: action = updateOwner i els name=... correctes */}
-      <form action={updateOwner} className="space-y-4">
-        {/* id ocult */}
-        <input type="hidden" name="id" value={owner.id} />
-
+      <form
+        action={`/admin/owners/${owner.id}/update`}
+        className="space-y-4 bg-white p-4 rounded-lg shadow"
+      >
+        {/* Nom */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
-            Nom
-          </label>
+          <label className="block text-sm font-medium mb-1">Nom</label>
           <input
-            name="name"                 // 👈 aquest és el que faltava que arribés bé
+            name="name"
             defaultValue={owner.name ?? ""}
-            required
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
+            className="w-full border rounded px-3 py-2"
           />
         </div>
 
+        {/* Email */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
-            Email
-          </label>
+          <label className="block text-sm font-medium mb-1">Email</label>
           <input
-            name="email"
             type="email"
+            name="email"
             defaultValue={owner.email ?? ""}
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-            placeholder="info@maspriorat.cat"
+            className="w-full border rounded px-3 py-2"
           />
         </div>
 
+        {/* Telèfon */}
         <div>
-          <label className="block mb-1 text-sm font-medium text-neutral-200">
-            Telèfon
-          </label>
+          <label className="block text-sm font-medium mb-1">Telèfon</label>
           <input
             name="phone"
             defaultValue={owner.phone ?? ""}
-            className="w-full border rounded px-3 py-2 bg-neutral-900 border-neutral-700 text-neutral-100"
-            placeholder="+34 600 000 000"
+            className="w-full border rounded px-3 py-2"
           />
         </div>
 
+        {/* Actiu */}
         <div className="flex items-center gap-2">
           <input
             id="is_active"
-            name="is_active"
             type="checkbox"
+            name="is_active"
             defaultChecked={owner.is_active ?? true}
-            className="w-4 h-4"
+            className="h-4 w-4"
           />
-          <label htmlFor="is_active" className="text-sm text-neutral-200">
+          <label htmlFor="is_active" className="text-sm">
             Actiu
           </label>
         </div>
 
+        {/* No mostrem cap slug perquè els owners no necessiten slug al panell */}
+
         <button
           type="submit"
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500"
+          className="bg-neutral-900 text-white px-4 py-2 rounded hover:bg-neutral-800"
         >
           Desa canvis
         </button>
